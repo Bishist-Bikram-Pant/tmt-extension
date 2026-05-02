@@ -1,350 +1,283 @@
-# Google TMT Translator Extension - Browser Plugin
+# Google TMT Translator Extension - User Guide
 
-A real-time web page translation browser extension for the **Google TMT Hackathon 2026**. Translate web content instantly using the Google Trilingual Machine Translation API.
+Welcome to the Google TMT Translator Extension. This guide will walk you through everything you need to know to use this browser extension for translating web pages in real-time.
 
-## 🌍 Features
+## Overview
 
-- **Real-time Translation**: Translate visible web page content without reloading
-- **Bidirectional Support**: English ↔ Nepali, English ↔ Tamang, Nepali ↔ Tamang
-- **Smart Caching**: Reduces API calls for improved performance
-- **Batch Processing**: Handles large pages efficiently
-- **One-Click Reset**: Revert page to original content anytime
-- **Language Detection**: Detects page language automatically
-- **Beautiful UI**: Clean, intuitive popup interface
-- **Progress Tracking**: Real-time translation status and statistics
+The Google TMT Translator Extension is a Chrome browser tool that allows you to translate web page content instantly between English, Nepali, and Tamang languages. Instead of manually copying and pasting text into a translation service, this extension translates the content right on the page you're viewing.
 
-## 📋 Supported Language Pairs
+## System Requirements
 
-| From | To | Support |
-|------|-----|---------|
-| English | Nepali | ✅ |
-| Nepali | English | ✅ |
-| English | Tamang | ✅ |
-| Tamang | English | ✅ |
-| Nepali | Tamang | ✅ |
-| Tamang | Nepali | ✅ |
+The extension requires the following to run properly:
 
-## 📁 Project Structure
+- Google Chrome or Chromium-based browser (version 88 or higher)
+- Internet connection for API access
+- API key from the Google TMT Hackathon registration
+- Minimum 2GB RAM available in your system
+- Modern processor (Intel Core i5 or equivalent)
 
-```
-tmt-translator-extension/
-├── manifest.json                 # Extension configuration
-├── LOGIC_EXPLANATION.md          # Detailed architecture & logic documentation
-├── README.md                     # This file
-│
-└── src/
-    ├── scripts/
-    │   ├── config.js            # Configuration & constants
-    │   ├── translation-service.js # Core translation API handler
-    │   ├── background.js        # Service worker (message hub)
-    │   └── content-script.js    # Page translator (DOM manipulation)
-    │
-    ├── popup/
-    │   ├── popup.html           # Extension popup UI
-    │   └── popup.js             # Popup controller & event handling
-    │
-    ├── styles/
-    │   └── popup.css            # Popup styling
-    │
-    └── assets/
-        ├── icon-16.png          # Extension icon (16x16)
-        ├── icon-48.png          # Extension icon (48x48)
-        └── icon-128.png         # Extension icon (128x128)
-```
+## Getting Started
 
-## 🚀 Installation
+### Step 1: Installation
 
-### Prerequisites
-- Google Chrome/Chromium browser (Version 88+)
-- API key from Google TMT Hackathon registration
+1. Open your Chrome browser
+2. Go to the extension settings page by typing `chrome://extensions/` in the address bar
+3. Enable "Developer mode" using the toggle button in the top right corner
+4. Click the "Load unpacked" button
+5. Navigate to the tmt-translator-extension folder and select it
+6. The extension will now appear in your Chrome toolbar
 
-### Steps
+### Step 2: Add Your API Key
 
-1. **Clone or Download the Repository**
-   ```bash
-   # Navigate to your desired directory
-   cd ~/projects
-   
-   # Clone the repository or extract the ZIP file
-   git clone <repository-url>
-   cd tmt-translator-extension
+The extension needs an API key to communicate with the translation service. This key is provided during hackathon registration.
+
+1. Open the file `src/scripts/config.js` in a text editor
+2. Find this line in the file:
    ```
+   API_KEY: 'team_xxxxxxxxxxxxxxxx',
+   ```
+3. Replace the placeholder with your actual API key
+4. Save the file
+5. Go back to the extensions page and click the refresh icon on the translator extension
 
-2. **Add Your API Key**
-   - Open `src/scripts/config.js`
-   - Find this line:
-     ```javascript
-     API_KEY: 'team_xxxxxxxxxxxxxxxx',
-     ```
-   - Replace with your actual API key from hackathon registration:
-     ```javascript
-     API_KEY: 'team_YOUR_ACTUAL_KEY_HERE',
-     ```
-   - Save the file
+### Step 3: Test the Extension
 
-3. **Load Extension in Chrome**
-   - Open Chrome and navigate to `chrome://extensions/`
-   - Enable **Developer mode** (top-right toggle)
-   - Click **Load unpacked**
-   - Navigate to and select the `tmt-translator-extension` folder
-   - The extension should appear in your extensions list
+Once installed and configured, test the extension with these steps:
 
-4. **Verify Installation**
-   - Look for the extension icon in your Chrome toolbar
-   - Click it to open the popup
-   - You should see the language selection interface
+1. Visit any website with text content (for example, www.example.com)
+2. Click the extension icon in your Chrome toolbar
+3. A popup window will appear with translation options
+4. The default settings show "English to Nepali" translation
+5. Click the "Translate" button to start translating the page
+6. Watch as the text on the webpage gets translated
 
-## 💻 Usage
+## How to Use
 
 ### Basic Translation
 
-1. **Navigate to any website** (e.g., English content)
-2. **Click the extension icon** in the toolbar
-3. **Select languages** (default: English → Nepali)
-4. **Click "🚀 Translate Page"**
-5. **Wait for translation** - Progress indicator shows translation status
-6. **View translated content** - Elements are marked with green left border
+1. Navigate to any website you want to translate
+2. Click the extension icon in your toolbar
+3. The popup will show:
+   - A "From" language selector (source language)
+   - A "To" language selector (target language)
+   - A swap button (arrow icon) to switch the source and target languages
+   - A progress bar that shows translation status
+   - Translate and Reset buttons
 
-### Swap Languages
+### Changing Languages
 
-- Click the **⇄** button to quickly swap source and target languages
-- Useful for translating content in the opposite direction
+The extension supports these language combinations:
 
-### Reset to Original
+- English to Nepali (and vice versa)
+- English to Tamang (and vice versa)
+- Nepali to Tamang (and vice versa)
 
-- Click **↺ Reset** to revert the page to original content
-- Original text is stored for quick restoration
+To change languages:
 
-### Clear Cache
+1. Click on the "From" dropdown to select the source language
+2. Click on the "To" dropdown to select the target language
+3. If you want to swap the source and target languages, click the arrow button between them
+4. Click "Translate" to start the translation
+
+### What Gets Translated
+
+The extension translates most visible text on a webpage, including:
+
+- Paragraph text
+- Headings and subheadings
+- Links
+- Button labels
+- List items
+- Table cells
+- Span elements
+
+The extension does NOT translate:
+
+- Text in images or graphics
+- Code or script content
+- Text inside style elements
+- Content marked as "no-translate"
+- Certain embedded media
+
+### Resetting the Page
+
+If you want to go back to the original content:
 
 1. Click the extension icon
-2. Expand **⚙️ Settings**
-3. Click **Clear Cache** to remove cached translations
-4. Cache is automatically cleared periodically (default: 60 minutes)
+2. Click the "Reset" button
+3. The page will return to its original language immediately
 
-## 🔑 API Key Setup
+### Understanding the Progress Bar
 
-### Getting Your API Key
+While translation is happening, a blue progress bar appears in the popup. This shows that the extension is actively translating content on the page. Once the bar completes, all visible translations are done.
 
-1. Register for the Google TMT Hackathon 2026
-2. Upon successful registration, you'll receive API credentials
-3. API key will be shared via WhatsApp/Discord group
+## Configuration Options
 
-### Securing Your API Key
+For users who want to customize how the extension works, the configuration file located at `src/scripts/config.js` contains these adjustable settings:
 
-**⚠️ Important Security Notes:**
+- MAX_ELEMENTS_PER_BATCH: Controls how many page elements are processed at one time
+- DELAY_BETWEEN_CALLS: The wait time between API requests (in milliseconds)
+- CACHE_EXPIRY: How long translated content is stored before requiring new translation (in minutes)
+- SELECTORS_TO_TRANSLATE: Which HTML elements should be translated
+- SELECTORS_TO_SKIP: Which elements should not be translated
 
-- Never commit your actual API key to public repositories
-- Always use placeholder (`team_xxxxxxxxxxxxxxxx`) for sharing code
-- For production, consider using environment variables:
-  ```javascript
-  const API_KEY = process.env.TMT_API_KEY || 'team_xxxxxxxxxxxxxxxx';
-  ```
-- For Chrome Web Store submission, use secure backend proxy
+After changing any configuration, refresh the extension from the extensions page.
 
-## 🛠️ Configuration
+## Technical Details
 
-### Customizing Settings
+The extension operates on a client-server architecture with these components:
 
-Edit `src/scripts/config.js` to customize:
+1. Content Script: Runs on every webpage and identifies translatable text elements
+2. Service Worker: Manages communication between the popup and content script
+3. Translation Service: Handles API requests to the Google TMT backend
+4. Popup Interface: Provides the user interface for controlling translations
 
-```javascript
-// Batch size for element processing
-UI: {
-  MAX_ELEMENTS_PER_BATCH: 100  // Default: 100
-}
+The extension uses Chrome's Message Passing API for communication between components. Translation requests are sent to the Google TMT API endpoint at tmt.ilprl.ku.edu.np/lang-translate.
 
-// Cache expiry time (in minutes)
-TRANSLATION: {
-  CACHE_EXPIRY: 60  // Default: 60 minutes
-}
+## Performance Considerations
 
-// Delay between API calls (in milliseconds)
-TRANSLATION: {
-  DELAY_BETWEEN_CALLS: 300  // Default: 300ms
-}
+The extension works most efficiently when:
 
-// Elements to translate
-SELECTORS_TO_TRANSLATE: [
-  'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-  'span', 'div', 'li', 'td', 'th', 'a', 'button'
-]
+- Processing pages with moderate amounts of text
+- Waiting for the progress bar to complete before navigating away
+- Keeping the browser window focused on the translating page
+- Using a stable internet connection with good bandwidth
 
-// Elements to skip (do not translate)
-SELECTORS_TO_SKIP: [
-  'script', 'style', 'code', 'pre',
-  '.no-translate', '[data-no-translate]'
-]
-```
+Large pages with thousands of elements may take several seconds to translate completely. The extension processes elements in batches to avoid overwhelming the system.
 
-### Skip Translation on Specific Pages
+## Troubleshooting
 
-Add the `data-no-translate` attribute to any element:
-```html
-<div data-no-translate>
-  This content will not be translated
-</div>
-```
+### Extension Does Not Appear in Toolbar
 
-Or add `.no-translate` class:
-```html
-<div class="no-translate">
-  This content will not be translated
-</div>
-```
+If you don't see the extension icon:
 
-## 🐛 Troubleshooting
+1. Click the Extensions menu icon in Chrome (top right)
+2. Find "Google TMT Translator"
+3. Click the pin icon next to it to add it to your main toolbar
 
-### Issue: "Invalid API token" Error
-- **Solution**: Verify API key is correctly entered in `config.js`
-- Check that the key hasn't expired
-- Ensure Bearer token format is correct
+### Getting "Translation Error" Messages
 
-### Issue: Extension not translating
-- **Solution**: Check browser console for errors
-  - Right-click page → Inspect → Console tab
-  - Look for red error messages
-- Verify the page is not a restricted page (e.g., chrome://, about:)
-- Try reloading the extension: go to `chrome://extensions`, click Reload
+If you see error messages during translation:
 
-### Issue: Slow translations
-- **Solution**: 
-  - Check internet connection
-  - Reduce `MAX_ELEMENTS_PER_BATCH` in config
-  - Clear cache and try again
-  - API might be under load - try again later
+1. Check that your API key is correctly configured in config.js
+2. Verify that your internet connection is working
+3. Try reloading the page before translating again
+4. If the error persists, refresh the extension from the extensions page
 
-### Issue: Some text not translating
-- **Solution**:
-  - Text might be in images (extension translates text only)
-  - Text might be in canvas or WebGL (not supported)
-  - Use browser's built-in translation as fallback
-  - Some elements might be in `SELECTORS_TO_SKIP`
+### Some Text Not Translating
 
-### Issue: Extension not showing up
-- **Solution**:
-  - Verify extension is enabled in `chrome://extensions`
-  - Try clicking the extension icon
-  - If icon not visible, click Extensions menu → find extension
-  - Ensure you're on a regular webpage (not restricted page)
+If certain text on the page is not translating:
 
-## 📊 Monitoring & Debugging
+1. The text might be inside an image or graphic (these cannot be translated)
+2. The text might be in a code block or script (intentionally skipped)
+3. Try zooming in to see if smaller elements are translated
+4. Clear the cache and try again
 
-### View Console Logs
+### Translation Takes Too Long
 
-1. **For Service Worker (Background)**:
-   - Go to `chrome://extensions/`
-   - Find extension and click "Service Worker"
-   - Console opens with background logs
+If translation is slow:
 
-2. **For Content Script**:
-   - Right-click webpage → Inspect
-   - Go to Console tab
-   - Look for logs starting with `[Content Script]`
+1. Check your internet connection speed
+2. Close other browser tabs to free up system resources
+3. Try translating a simpler page first
+4. Refresh the extension and try again
 
-3. **For Popup Logs**:
-   - Right-click extension icon → Inspect popup
-   - Look for logs starting with `[Popup]`
+### Cannot Establish Connection Error
 
-### Monitor Network Requests
+This usually means the content script is not loaded on the page:
 
-1. Open DevTools (F12)
-2. Go to Network tab
-3. Translate a page
-4. Look for requests to `https://tmt.ilprl.ku.edu.np/lang-translate`
-5. Inspect request/response to debug API issues
+1. Refresh the webpage
+2. Click the extension icon again
+3. Try translating a different website first
+4. Restart your browser if problems persist
 
-## 📝 Detailed Documentation
+## API Information
 
-For in-depth understanding of the extension architecture, data flow, and technical decisions, refer to **[LOGIC_EXPLANATION.md](./LOGIC_EXPLANATION.md)**.
+The extension communicates with the Google TMT API for translation services. Key details:
 
-Topics covered:
-- Complete architecture diagram
-- Component responsibilities
-- Message passing flow
-- Caching mechanism
-- Element selection strategy
-- API communication format
-- Error handling approach
-- Performance optimization
-- Security considerations
+- Endpoint: https://tmt.ilprl.ku.edu.np/lang-translate
+- Authentication: API key-based
+- Request Format: JSON with source text, source language, and target language
+- Response Format: JSON with translated text
+- Rate Limiting: The extension implements intelligent retry logic for handling rate limits
 
-## 🎯 Hackathon Submission Checklist
+The API requires three pieces of information for each translation request:
 
-- [x] Source code in GitHub with commit history
-- [x] Executable/deployable build in this directory
-- [x] README with user guide
-- [x] Detailed system architecture documentation (LOGIC_EXPLANATION.md)
-- [ ] Demo video (to be added - record screen showing:
-  - Extension installation
-  - Language selection
-  - Real-time translation
-  - Reset functionality
-  - Cache statistics)
+1. The text to translate
+2. The source language code (en, ne, tmg)
+3. The target language code (en, ne, tmg)
 
-## 🚀 Building & Packaging
+## System Architecture
 
-### For Chrome Web Store (Future)
+The extension consists of the following components working together:
 
-```bash
-# Create a ZIP file for submission
-zip -r tmt-translator-extension.zip tmt-translator-extension/
+Popup Interface -> Service Worker -> Content Script
+                             |
+                             V
+                      Translation API Service
 
-# Exclude unnecessary files
-zip -r tmt-translator-extension.zip tmt-translator-extension/ \
-  -x "*.git*" "*.DS_Store" "node_modules/*"
-```
+When you click "Translate", the popup sends a message to the service worker, which forwards it to the content script running on the webpage. The content script identifies translatable elements and sends them to the translation service, which contacts the Google TMT API and returns translated text. The content script then updates the webpage with the translated content.
 
-## 📄 License
+## Storage and Caching
 
-This project is licensed under the **MIT License** as required by the Google TMT Hackathon 2026.
+The extension uses browser storage to cache translations:
 
-See LICENSE file for details.
+- Recent translations are stored locally in the browser
+- Cached translations reduce API calls and improve performance
+- Cache entries expire after 60 minutes by default
+- You can clear the cache by refreshing the extension
 
-## 🤝 Contributing
+## Privacy
 
-For the hackathon submission, improvements should be made through proper version control:
+The extension operates entirely within your browser. No personal data is stored or transmitted except:
 
-1. Create a new branch for each feature
-2. Commit changes with clear messages
-3. Update documentation accordingly
-4. Test thoroughly before commit
+- The text you choose to translate (sent to Google TMT API)
+- Your API key (stored locally in configuration)
+- Translation cache (stored in browser storage)
 
-## 📞 Support
+## Known Limitations
 
-For issues or questions:
-1. Check this README's Troubleshooting section
-2. Review LOGIC_EXPLANATION.md for architecture details
-3. Check console logs for error messages
-4. Contact hackathon organizers via WhatsApp/Discord group
+- The extension works best with text-based content
+- Very large pages may take time to translate
+- Some special characters may not translate correctly
+- The extension requires an active internet connection
+- Some websites with strict content security policies may block the extension
 
-## 🎓 Learning Resources
+## Support and Feedback
 
-### Understanding the Extension
+For issues or suggestions:
 
-- [Chrome Extensions Official Docs](https://developer.chrome.com/docs/extensions/)
-- [Google TMT API Documentation](https://tmt.ilprl.ku.edu.np/)
-- [Web APIs Reference](https://developer.mozilla.org/en-US/docs/Web/API)
+1. Check the console logs for error messages (right-click > Inspect > Console)
+2. Verify all configuration steps are completed correctly
+3. Test with a different website to isolate the problem
+4. Restart your browser and try again
 
-### Debugging
+## File Structure Reference
 
-- [Chrome DevTools Guide](https://developer.chrome.com/docs/devtools/)
-- [Extension Debugging](https://developer.chrome.com/docs/extensions/mv3/service_workers/debugging/)
+For developers wanting to understand the codebase:
 
-## 🎉 Success Criteria
+- manifest.json: Extension configuration and permissions
+- config.js: Constants and settings
+- translation-service.js: API communication logic
+- background.js: Service worker and message routing
+- content-script.js: Page translation logic and DOM manipulation
+- popup.js: Popup interface controller
+- popup.css: Visual styling for the popup
+- popup.html: Popup layout and elements
 
-The extension successfully:
-- ✅ Translates web content in real-time
-- ✅ Supports all 6 translation pairs
-- ✅ Handles layout preservation
-- ✅ Implements intelligent caching
-- ✅ Provides user-friendly interface
-- ✅ Includes comprehensive documentation
-- ✅ Follows best practices
+## Version Information
 
----
+Current Version: 1.0.0
+Compatible Browsers: Chrome 88+
+API Version: Google TMT v1
+Manifest Version: 3
 
-**Version**: 1.0.0  
-**Last Updated**: April 2026  
-**Hackathon**: Google TMT Hackathon 2026  
-**Status**: Ready for Submission
+## Final Tips
+
+1. Start with simple websites to ensure the extension works
+2. Test with different language pairs to find what works best
+3. Keep your API key private and secure
+4. Regularly check for updates to the extension
+5. Report any unusual behavior for debugging
+
+The extension is now ready to use. Simply navigate to any webpage and click the extension icon to begin translating content in real-time.

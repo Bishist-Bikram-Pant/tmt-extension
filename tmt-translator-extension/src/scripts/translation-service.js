@@ -61,25 +61,46 @@ class TranslationService {
   async makeAPICall(text, srcLang, tgtLang) {
     // Map language codes to API codes (especially for Tamang alternatives)
     const mapLanguageCode = (code) => {
-      return CONFIG.API_LANGUAGE_CODES?.[code] || code;
+      const mapped = CONFIG.API_LANGUAGE_CODES?.[code] || code;
+      console.log(`[Translation Service] Mapping language code: ${code} -> ${mapped}`);
+      return mapped;
     };
 
     let apiSrcLang = mapLanguageCode(srcLang);
     let apiTgtLang = mapLanguageCode(tgtLang);
 
+    // Validate that language codes were mapped successfully
+    if (!apiSrcLang || !apiTgtLang) {
+      throw new Error(`Invalid language codes: src=${apiSrcLang}, tgt=${apiTgtLang}`);
+    }
+
+    // Validate text
+    if (!text || text.trim().length === 0) {
+      throw new Error('Text to translate is empty');
+    }
+
     // Try alternative Tamang codes if primary fails
-    const tamangAlternatives = ['tam', 'tag', 'tg'];
-    let tamangCodeIndex = -1;
+    const tamangAlternatives = ['tmg', 'tam', 'tag', 'tg'];
+    let tamangCodeIndexSrc = -1;
+    let tamangCodeIndexTgt = -1;
     
+    if (srcLang === 'tmg') {
+      tamangCodeIndexSrc = 0; // Start with first alternative for source
+    }
     if (tgtLang === 'tmg') {
-      tamangCodeIndex = 0; // Start with first alternative
+      tamangCodeIndexTgt = 0; // Start with first alternative for target
     }
 
     let retryCount = 0;
-    const maxRetries = 3;
+    const maxRetries = 2;
 
-    while (retryCount < maxRetries || tamangCodeIndex < tamangAlternatives.length) {
+    while (retryCount < maxRetries || tamangCodeIndexSrc < tamangAlternatives.length || tamangCodeIndexTgt < tamangAlternatives.length) {
       try {
+        // Validate parameters before making API call
+        if (!text || !apiSrcLang || !apiTgtLang) {
+          throw new Error(`Missing parameters: text=${!!text}, src_lang=${!!apiSrcLang}, tgt_lang=${!!apiTgtLang}`);
+        }
+
         const payload = {
           text: text,
           src_lang: apiSrcLang,
@@ -115,11 +136,19 @@ class TranslationService {
 
         // Handle 429 (Too Many Requests) with special Tamang handling
         if (response.status === 429) {
-          // If this is Tamang, try alternative language code before exponential backoff
-          if (tgtLang === 'tmg' && tamangCodeIndex < tamangAlternatives.length) {
-            apiTgtLang = tamangAlternatives[tamangCodeIndex];
-            tamangCodeIndex++;
-            console.warn(`[Translation Service] Rate limited (429). Trying alternative Tamang code: ${apiTgtLang}`);
+          // If source is Tamang, try alternative language code
+          if (srcLang === 'tmg' && tamangCodeIndexSrc < tamangAlternatives.length) {
+            apiSrcLang = tamangAlternatives[tamangCodeIndexSrc];
+            tamangCodeIndexSrc++;
+            console.warn(`[Translation Service] Rate limited (429). Trying alternative source Tamang code: ${apiSrcLang}`);
+            continue; // Retry with new code immediately
+          }
+
+          // If this is target Tamang, try alternative language code before exponential backoff
+          if (tgtLang === 'tmg' && tamangCodeIndexTgt < tamangAlternatives.length) {
+            apiTgtLang = tamangAlternatives[tamangCodeIndexTgt];
+            tamangCodeIndexTgt++;
+            console.warn(`[Translation Service] Rate limited (429). Trying alternative target Tamang code: ${apiTgtLang}`);
             continue; // Retry with new code immediately
           }
 
@@ -141,7 +170,7 @@ class TranslationService {
         }
 
         if (data.message_type === 'SUCCESS') {
-          console.log(`[Translation Service] ✓ Translation successful (${apiSrcLang}→${apiTgtLang}): "${data.output.substring(0, 100)}${data.output.length > 100 ? '...' : ''}"`);
+          console.log(`[Translation Service] Translation successful (${apiSrcLang}→${apiTgtLang}): "${data.output.substring(0, 100)}${data.output.length > 100 ? '...' : ''}"`);
           return data.output;
         } else if (data.message_type === 'error' || data.message) {
           console.error('[Translation Service] API error response:', data.message);
@@ -158,7 +187,7 @@ class TranslationService {
       }
     }
 
-    throw new Error('Max retries exceeded for API call (rate limited, all Tamang codes attempted)');
+    throw new Error('Max retries exceeded for API call');
   }
 
   /**
