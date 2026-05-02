@@ -26,8 +26,8 @@ const CONFIG = {
   API_LANGUAGE_CODES: {
     'en': 'en',      // English
     'ne': 'ne',      // Nepali (confirmed working)
-    'tmg': 'tmg',    // Tamang - try 'tmg' first
-    'tam': 'tmg',    // Tamang alternative mapped to tmg
+    'tmg': 'tam',    // Tamang - try 'tam' if 'tmg' fails
+    'tam': 'tam',    // Tamang alternative
     'tag': 'tag',    // Tamang alternative
     'tg': 'tg'       // Tamang alternative
   },

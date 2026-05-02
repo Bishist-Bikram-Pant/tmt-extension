@@ -8,10 +8,8 @@ class PopupController {
   constructor() {
     this.currentTab = null;
     this.isTranslating = false;
-    this.elementCache = new Map();
     this.initializeElements();
     this.setupEventListeners();
-    this.updateStatus();
   }
 
   /**
@@ -24,19 +22,11 @@ class PopupController {
       swapBtn: document.getElementById('swapLangs'),
       translateBtn: document.getElementById('translateBtn'),
       resetBtn: document.getElementById('resetBtn'),
-      clearCacheBtn: document.getElementById('clearCacheBtn'),
-      statusIndicator: document.getElementById('statusIndicator'),
-      statusText: document.getElementById('statusText'),
-      statusDot: document.querySelector('.status-dot'),
       progressSection: document.getElementById('progressSection'),
       progressFill: document.getElementById('progressFill'),
       progressText: document.getElementById('progressText'),
-      elementCount: document.getElementById('elementCount'),
-      cacheSize: document.getElementById('cacheSize'),
       errorMessage: document.getElementById('errorMessage'),
-      successMessage: document.getElementById('successMessage'),
-      enableCache: document.getElementById('enableCache'),
-      elementCountSpan: document.querySelector('[data-element-count]')
+      successMessage: document.getElementById('successMessage')
     };
   }
 
@@ -47,14 +37,10 @@ class PopupController {
     this.elements.translateBtn.addEventListener('click', () => this.handleTranslate());
     this.elements.resetBtn.addEventListener('click', () => this.handleReset());
     this.elements.swapBtn.addEventListener('click', () => this.handleSwapLanguages());
-    this.elements.clearCacheBtn.addEventListener('click', () => this.handleClearCache());
 
     // Auto-update on language selection change
     this.elements.sourceLang.addEventListener('change', () => this.validateLanguagePair());
     this.elements.targetLang.addEventListener('change', () => this.validateLanguagePair());
-
-    // Update status periodically
-    setInterval(() => this.updateStatus(), 2000);
   }
 
   /**
@@ -121,7 +107,6 @@ class PopupController {
 
       if (response.success) {
         this.showSuccess('Page translation started successfully!');
-        this.updateStatus();
       } else {
         this.showError('Failed to start translation: ' + response.error);
       }
@@ -143,7 +128,6 @@ class PopupController {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
       await this.sendMessage({ action: 'RESET_PAGE' });
       this.showSuccess('Page has been reset to original content');
-      this.updateStatus();
     } catch (error) {
       console.error('[Popup] Reset error:', error);
       this.showError('Failed to reset page: ' + error.message);
@@ -161,20 +145,6 @@ class PopupController {
     this.elements.targetLang.value = src;
 
     this.validateLanguagePair();
-  }
-
-  /**
-   * Handle clear cache button click
-   */
-  async handleClearCache() {
-    try {
-      await chrome.runtime.sendMessage({ action: 'CLEAR_CACHE' });
-      this.showSuccess('Cache cleared successfully');
-      this.updateCacheSize();
-    } catch (error) {
-      console.error('[Popup] Clear cache error:', error);
-      this.showError('Failed to clear cache: ' + error.message);
-    }
   }
 
   /**
@@ -219,39 +189,14 @@ class PopupController {
         });
       }).catch(() => ({ isTranslating: false, elementCount: 0 }));
 
-      // Update element count
-      this.elements.elementCount.textContent = response.elementCount || 0;
-
-      // Update status indicator
+      // Update button state
       if (response.isTranslating) {
-        this.elements.statusText.textContent = 'Translating...';
-        this.elements.statusDot.classList.add('translating');
         this.elements.translateBtn.disabled = true;
       } else {
-        this.elements.statusText.textContent = 'Ready';
-        this.elements.statusDot.classList.remove('translating');
         this.elements.translateBtn.disabled = false;
       }
-
-      // Update cache size
-      this.updateCacheSize();
     } catch (error) {
-      console.log('[Popup] Could not get page status (might be restricted page)');
-      this.elements.statusText.textContent = 'Restricted page';
-      this.elements.statusDot.classList.add('inactive');
-      this.elements.translateBtn.disabled = true;
-    }
-  }
-
-  /**
-   * Update cache size display
-   */
-  async updateCacheSize() {
-    try {
-      const response = await chrome.runtime.sendMessage({ action: 'GET_CACHE_STATS' });
-      this.elements.cacheSize.textContent = response.stats.size || 0;
-    } catch (error) {
-      console.log('[Popup] Could not get cache stats');
+      console.log('[Popup] Could not get page status');
     }
   }
 
@@ -260,10 +205,10 @@ class PopupController {
    */
   showProgress(show) {
     if (show) {
-      this.elements.progressSection.style.display = 'block';
+      this.elements.progressSection.classList.add('show');
       this.elements.progressText.textContent = 'Translating... Please wait';
     } else {
-      this.elements.progressSection.style.display = 'none';
+      this.elements.progressSection.classList.remove('show');
     }
   }
 
@@ -272,11 +217,11 @@ class PopupController {
    */
   showError(message) {
     this.elements.errorMessage.textContent = message;
-    this.elements.errorMessage.style.display = 'block';
-    this.elements.successMessage.style.display = 'none';
+    this.elements.errorMessage.classList.add('show');
+    this.elements.successMessage.classList.remove('show');
 
     setTimeout(() => {
-      this.elements.errorMessage.style.display = 'none';
+      this.elements.errorMessage.classList.remove('show');
     }, 5000);
   }
 
@@ -285,11 +230,11 @@ class PopupController {
    */
   showSuccess(message) {
     this.elements.successMessage.textContent = message;
-    this.elements.successMessage.style.display = 'block';
-    this.elements.errorMessage.style.display = 'none';
+    this.elements.successMessage.classList.add('show');
+    this.elements.errorMessage.classList.remove('show');
 
     setTimeout(() => {
-      this.elements.successMessage.style.display = 'none';
+      this.elements.successMessage.classList.remove('show');
     }, 5000);
   }
 
@@ -297,8 +242,8 @@ class PopupController {
    * Clear all messages
    */
   clearMessages() {
-    this.elements.errorMessage.style.display = 'none';
-    this.elements.successMessage.style.display = 'none';
+    this.elements.errorMessage.classList.remove('show');
+    this.elements.successMessage.classList.remove('show');
   }
 }
 

@@ -3,108 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Google TMT Translator</title>
+    <title>Translator</title>
     <link rel="stylesheet" href="../styles/popup.css">
 </head>
 <body>
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <h1>🌐 TMT Translator</h1>
-            <p class="subtitle">Real-time page translation</p>
-        </div>
-
-        <!-- Status Section -->
-        <div class="status-section">
-            <div class="status-indicator" id="statusIndicator">
-                <span class="status-dot"></span>
-                <span id="statusText">Ready</span>
-            </div>
+            <h1>Translator</h1>
         </div>
 
         <!-- Language Selection -->
         <div class="language-section">
-            <div class="language-pair">
-                <label class="label">From:</label>
+            <div class="language-group">
+                <label for="sourceLang" class="label">From</label>
                 <select id="sourceLang" class="select">
-                    <option value="en">English (English)</option>
-                    <option value="ne">नेपाली (Nepali)</option>
-                    <option value="tmg">तामाङ (Tamang)</option>
+                    <option value="en">English</option>
+                    <option value="ne">नेपाली</option>
+                    <option value="tmg">तामाङ</option>
                 </select>
             </div>
 
-            <div class="swap-button-container">
-                <button id="swapLangs" class="swap-button" title="Swap languages">
-                    ⇄
-                </button>
-            </div>
+            <button id="swapLangs" class="swap-button" title="Swap languages" aria-label="Swap languages">⇄</button>
 
-            <div class="language-pair">
-                <label class="label">To:</label>
+            <div class="language-group">
+                <label for="targetLang" class="label">To</label>
                 <select id="targetLang" class="select">
-                    <option value="en">English (English)</option>
-                    <option value="ne" selected>नेपाली (Nepali)</option>
-                    <option value="tmg">तामाङ (Tamang)</option>
+                    <option value="en">English</option>
+                    <option value="ne" selected>नेपाली</option>
+                    <option value="tmg">तामाङ</option>
                 </select>
             </div>
-        </div>
-
-        <!-- Action Buttons -->
-        <div class="button-section">
-            <button id="translateBtn" class="button button-primary" title="Start translation">
-                🚀 Translate Page
-            </button>
-            <button id="resetBtn" class="button button-secondary" title="Reset to original">
-                ↺ Reset
-            </button>
         </div>
 
         <!-- Progress Section -->
-        <div class="progress-section" id="progressSection" style="display: none;">
+        <div class="progress-section" id="progressSection">
             <div class="progress-bar">
                 <div class="progress-fill" id="progressFill"></div>
             </div>
             <p class="progress-text" id="progressText">Translating...</p>
         </div>
 
-        <!-- Statistics Section -->
-        <div class="stats-section">
-            <div class="stat-item">
-                <span class="stat-label">Elements:</span>
-                <span class="stat-value" id="elementCount">0</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-label">Cache:</span>
-                <span class="stat-value" id="cacheSize">0</span>
-            </div>
+        <!-- Messages -->
+        <div id="errorMessage" class="message error-message"></div>
+        <div id="successMessage" class="message success-message"></div>
+
+        <!-- Action Buttons -->
+        <div class="button-section">
+            <button id="translateBtn" class="button button-primary">
+                Translate
+            </button>
+            <button id="resetBtn" class="button button-secondary">
+                Reset
+            </button>
         </div>
-
-        <!-- Settings Section -->
-        <details class="settings-section">
-            <summary>⚙️ Settings</summary>
-            <div class="settings-content">
-                <label class="checkbox-label">
-                    <input type="checkbox" id="enableCache" checked>
-                    <span>Enable caching</span>
-                </label>
-                <button id="clearCacheBtn" class="button button-tertiary">
-                    Clear Cache
-                </button>
-            </div>
-        </details>
-
-        <!-- Info Section -->
-        <div class="info-section">
-            <p class="info-text">
-                Supported pairs: EN ↔ NE, EN ↔ TMG, NE ↔ TMG
-            </p>
-        </div>
-
-        <!-- Error Message -->
-        <div class="error-message" id="errorMessage" style="display: none;"></div>
-
-        <!-- Success Message -->
-        <div class="success-message" id="successMessage" style="display: none;"></div>
     </div>
 
     <!-- Load config first as global script -->
