@@ -77,6 +77,7 @@ class TranslationService {
 
     let retryCount = 0;
     const maxRetries = 3;
+    let lastError = null;
 
     while (retryCount < maxRetries || tamangCodeIndex < tamangAlternatives.length) {
       try {
@@ -145,7 +146,19 @@ class TranslationService {
           return data.output;
         } else if (data.message_type === 'error' || data.message) {
           console.error('[Translation Service] API error response:', data.message);
-          throw new Error(`API Error: ${data.message || 'Unknown error'}`);
+          const errorMsg = `API Error: ${data.message || 'Unknown error'}`;
+          
+          // If translating to Tamang and this is a language code error, try alternatives
+          if (tgtLang === 'tmg' && tamangCodeIndex < tamangAlternatives.length && 
+              (data.message.includes('tgt_lang') || data.message.includes('language'))) {
+            lastError = new Error(errorMsg);
+            apiTgtLang = tamangAlternatives[tamangCodeIndex];
+            tamangCodeIndex++;
+            console.warn(`[Translation Service] Tamang code rejected. Trying alternative: ${apiTgtLang}`);
+            continue; // Try next alternative
+          }
+          
+          throw new Error(errorMsg);
         } else {
           console.error('[Translation Service] Unexpected API response:', JSON.stringify(data).substring(0, 100));
           throw new Error(`Unexpected API response: ${JSON.stringify(data)}`);
@@ -154,9 +167,24 @@ class TranslationService {
         if (error.name === 'AbortError') {
           throw new Error('Translation request timed out');
         }
+        
+        // For Tamang translations, try alternative codes on certain errors
+        if (tgtLang === 'tmg' && tamangCodeIndex < tamangAlternatives.length && 
+            (error.message.includes('required') || error.message.includes('Invalid') || error.message.includes('not supported'))) {
+          lastError = error;
+          apiTgtLang = tamangAlternatives[tamangCodeIndex];
+          tamangCodeIndex++;
+          console.warn(`[Translation Service] Error with Tamang code "${tamangAlternatives[tamangCodeIndex - 1]}". Trying alternative: ${apiTgtLang}`);
+          console.warn(`[Translation Service] Error was: ${error.message}`);
+          continue; // Try next alternative
+        }
+        
         throw error;
       }
     }
+    
+    // If we exhausted all attempts, throw the last error
+    throw lastError || new Error('Translation failed after all retries')
 
     throw new Error('Max retries exceeded for API call (rate limited, all Tamang codes attempted)');
   }
