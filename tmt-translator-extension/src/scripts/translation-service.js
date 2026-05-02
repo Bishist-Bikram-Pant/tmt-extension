@@ -55,26 +55,44 @@ class TranslationService {
 
   /**
    * Makes API call to TMT endpoint with exponential backoff for rate limiting
+   * Tries alternative language codes for Tamang if rate limited
    * @private
    */
   async makeAPICall(text, srcLang, tgtLang) {
-    const payload = {
-      text: text,
-      src_lang: srcLang,
-      tgt_lang: tgtLang
+    // Map language codes to API codes (especially for Tamang alternatives)
+    const mapLanguageCode = (code) => {
+      return CONFIG.API_LANGUAGE_CODES?.[code] || code;
     };
 
-    const headers = {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${CONFIG.API.API_KEY}`
-    };
+    let apiSrcLang = mapLanguageCode(srcLang);
+    let apiTgtLang = mapLanguageCode(tgtLang);
+
+    // Try alternative Tamang codes if primary fails
+    const tamangAlternatives = ['tam', 'tag', 'tg'];
+    let tamangCodeIndex = -1;
+    
+    if (tgtLang === 'tmg') {
+      tamangCodeIndex = 0; // Start with first alternative
+    }
 
     let retryCount = 0;
     const maxRetries = 3;
 
-    while (retryCount < maxRetries) {
+    while (retryCount < maxRetries || tamangCodeIndex < tamangAlternatives.length) {
       try {
-        console.log(`[Translation Service] Making API call (attempt ${retryCount + 1})...`);
+        const payload = {
+          text: text,
+          src_lang: apiSrcLang,
+          tgt_lang: apiTgtLang
+        };
+
+        const headers = {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${CONFIG.API.API_KEY}`
+        };
+
+        console.log(`[Translation Service] API call (attempt ${retryCount + 1}): ${apiSrcLang} → ${apiTgtLang}`);
+        console.log(`[Translation Service] Text: "${text.substring(0, 100)}${text.length > 100 ? '...' : ''}"`);
         
         const controller = new AbortController();
         const timeoutId = setTimeout(
@@ -95,9 +113,18 @@ class TranslationService {
         const responseText = await response.text();
         console.log('[Translation Service] Response status:', response.status, response.statusText);
 
-        // Handle 429 (Too Many Requests) with exponential backoff
+        // Handle 429 (Too Many Requests) with special Tamang handling
         if (response.status === 429) {
-          const waitTime = Math.pow(2, retryCount) * 1000; // 1s, 2s, 4s
+          // If this is Tamang, try alternative language code before exponential backoff
+          if (tgtLang === 'tmg' && tamangCodeIndex < tamangAlternatives.length) {
+            apiTgtLang = tamangAlternatives[tamangCodeIndex];
+            tamangCodeIndex++;
+            console.warn(`[Translation Service] Rate limited (429). Trying alternative Tamang code: ${apiTgtLang}`);
+            continue; // Retry with new code immediately
+          }
+
+          // Otherwise, use exponential backoff with a CAP of 10 seconds
+          const waitTime = Math.min(Math.pow(2, retryCount) * 1000, 10000); // Cap at 10s max
           console.warn(`[Translation Service] Rate limited (429). Waiting ${waitTime}ms before retry...`);
           await new Promise(resolve => setTimeout(resolve, waitTime));
           retryCount++;
@@ -114,11 +141,13 @@ class TranslationService {
         }
 
         if (data.message_type === 'SUCCESS') {
-          console.log('[Translation Service] Translation successful');
+          console.log(`[Translation Service] ✓ Translation successful (${apiSrcLang}→${apiTgtLang}): "${data.output.substring(0, 100)}${data.output.length > 100 ? '...' : ''}"`);
           return data.output;
         } else if (data.message_type === 'error' || data.message) {
+          console.error('[Translation Service] API error response:', data.message);
           throw new Error(`API Error: ${data.message || 'Unknown error'}`);
         } else {
+          console.error('[Translation Service] Unexpected API response:', JSON.stringify(data).substring(0, 100));
           throw new Error(`Unexpected API response: ${JSON.stringify(data)}`);
         }
       } catch (error) {
@@ -129,7 +158,7 @@ class TranslationService {
       }
     }
 
-    throw new Error('Max retries exceeded for API call (rate limited)');
+    throw new Error('Max retries exceeded for API call (rate limited, all Tamang codes attempted)');
   }
 
   /**
@@ -138,12 +167,18 @@ class TranslationService {
    */
   isValidLanguagePair(srcLang, tgtLang) {
     if (srcLang === tgtLang) {
+      console.warn(`[Translation Service] Invalid pair: source and target are the same (${srcLang})`);
       return false;
     }
 
     const supported = CONFIG.TRANSLATION_PAIRS.some(
       pair => pair.from === srcLang && pair.to === tgtLang
     );
+
+    if (!supported) {
+      console.error(`[Translation Service] Unsupported language pair: ${srcLang} → ${tgtLang}`);
+      console.log('[Translation Service] Supported pairs:', CONFIG.TRANSLATION_PAIRS.map(p => `${p.from}→${p.to}`).join(', '));
+    }
 
     return supported;
   }

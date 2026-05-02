@@ -22,6 +22,16 @@ const CONFIG = {
     TAMANG: { code: 'tmg', name: 'Tamang', native: 'तामाङ' }
   },
 
+  // API Language Code Mappings (some APIs use different codes)
+  API_LANGUAGE_CODES: {
+    'en': 'en',      // English
+    'ne': 'ne',      // Nepali (confirmed working)
+    'tmg': 'tam',    // Tamang - try 'tam' if 'tmg' fails
+    'tam': 'tam',    // Tamang alternative
+    'tag': 'tag',    // Tamang alternative
+    'tg': 'tg'       // Tamang alternative
+  },
+
   // Supported Translation Pairs
   TRANSLATION_PAIRS: [
     { from: 'en', to: 'ne', label: 'English → Nepali' },
@@ -37,7 +47,7 @@ const CONFIG = {
     // Maximum characters to send per API call (to respect API limits)
     MAX_CHARS_PER_REQUEST: 500,
     // Delay between API calls in milliseconds (increased to respect rate limits)
-    DELAY_BETWEEN_CALLS: 500,
+    DELAY_BETWEEN_CALLS: 1000,
     // Store translation cache to avoid redundant API calls
     ENABLE_CACHE: true,
     // Cache expiry time in minutes
@@ -47,7 +57,7 @@ const CONFIG = {
   // UI/UX Configuration
   UI: {
     // Maximum number of elements to translate at once
-    MAX_ELEMENTS_PER_BATCH: 100,
+    MAX_ELEMENTS_PER_BATCH: 50,
     // Show loading indicator
     SHOW_LOADING: true,
     // Enable notifications

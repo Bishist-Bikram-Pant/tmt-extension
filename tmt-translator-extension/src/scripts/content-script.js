@@ -23,7 +23,7 @@ const CONTENT_SCRIPT_CONFIG = {
     MAX_ELEMENTS_PER_BATCH: 100
   },
   TRANSLATION: {
-    DELAY_BETWEEN_CALLS: 300,
+    DELAY_BETWEEN_CALLS: 500,
     MAX_CHARS_PER_REQUEST: 500
   }
 };
@@ -105,22 +105,24 @@ class PageTranslator {
       
       // Get all translatable elements
       const elements = this.getTranslatableElements();
-      console.log(`[Content Script] Found ${elements.length} elements to translate`);
+      console.log(`[Content Script] ✓ Found ${elements.length} elements to translate`);
 
       if (elements.length === 0) {
-        console.warn('[Content Script] No translatable elements found');
+        console.warn('[Content Script] No translatable elements found on this page');
+        console.log('[Content Script] Selectors used:', this.config.SELECTORS_TO_TRANSLATE);
         this.isTranslating = false;
         return;
       }
 
       // Process elements in batches
+      console.log(`[Content Script] Starting batch processing (batch size: ${this.config.UI.MAX_ELEMENTS_PER_BATCH})...`);
       await this.processElementsInBatches(elements);
 
       // Update status
       this.updateStatus();
-      console.log('[Content Script] Translation completed');
+      console.log('[Content Script] ✓ Translation completed successfully');
     } catch (error) {
-      console.error('[Content Script] Translation error:', error);
+      console.error('[Content Script] Translation error:', error.message);
       this.isTranslating = false;
     }
   }
@@ -176,28 +178,39 @@ class PageTranslator {
    */
   async processElementsInBatches(elements) {
     const batchSize = this.config.UI.MAX_ELEMENTS_PER_BATCH;
+    const totalBatches = Math.ceil(elements.length / batchSize);
 
     for (let i = 0; i < elements.length; i += batchSize) {
+      const batchNum = Math.floor(i / batchSize) + 1;
       const batch = elements.slice(i, i + batchSize);
+      console.log(`[Content Script] Processing batch ${batchNum}/${totalBatches} (${batch.length} elements)...`);
+      
       await this.processBatch(batch);
 
       // Add delay between batches to respect rate limiting
       if (i + batchSize < elements.length) {
-        console.log(`[Content Script] Batch complete, waiting before next batch...`);
+        console.log(`[Content Script] Batch ${batchNum} complete, waiting before next batch...`);
         await this.delay(this.config.TRANSLATION.DELAY_BETWEEN_CALLS * 3);
       }
     }
+    
+    console.log(`[Content Script] ✓ All ${totalBatches} batches processed`);
   }
 
   /**
    * Process a batch of elements sequentially (NOT concurrently) to avoid rate limiting
    */
   async processBatch(elements) {
+    let successCount = 0;
     for (const element of elements) {
-      await this.translateElement(element);
-      // Small delay between each element to avoid overwhelming the API
-      await this.delay(this.config.TRANSLATION.DELAY_BETWEEN_CALLS);
+      try {
+        await this.translateElement(element);
+        successCount++;
+      } catch (error) {
+        console.error('[Content Script] Failed to translate element:', error);
+      }
     }
+    console.log(`[Content Script] Batch result: ${successCount}/${elements.length} elements translated`);
   }
 
   /**
@@ -205,39 +218,56 @@ class PageTranslator {
    */
   async translateElement(element) {
     try {
-      // Store original content if not already stored
-      const elementId = this.getElementId(element);
-      if (!this.translatedElements.has(elementId)) {
-        this.translatedElements.set(elementId, {
-          element: element,
-          original: element.textContent,
-          originalHTML: element.innerHTML
-        });
+      // Get only DIRECT text nodes (not nested content)
+      const directTextNodes = [];
+      for (const node of element.childNodes) {
+        if (node.nodeType === Node.TEXT_NODE) {
+          const text = node.textContent.trim();
+          if (text && text.length > 0 && text.length <= this.config.TRANSLATION.MAX_CHARS_PER_REQUEST) {
+            directTextNodes.push({ node, text });
+          }
+        }
       }
 
-      const originalText = this.translatedElements.get(elementId).original;
+      // Translate each direct text node separately
+      for (const { node, text } of directTextNodes) {
+        try {
+          const response = await this.sendTranslationRequest(
+            text,
+            this.currentSrcLang,
+            this.currentTgtLang
+          );
 
-      // Skip very long texts to respect API limits
-      if (originalText.length > this.config.TRANSLATION.MAX_CHARS_PER_REQUEST) {
-        console.warn('[Content Script] Text too long, skipping:', originalText.substring(0, 50));
-        return;
-      }
+          if (response && response.success) {
+            console.log('[Content Script] ✓ Element translated:', {
+              original: text.substring(0, 50),
+              translated: response.translated.substring(0, 50)
+            });
 
-      // Send translation request to background script
-      const response = await this.sendTranslationRequest(
-        originalText,
-        this.currentSrcLang,
-        this.currentTgtLang
-      );
+            // Update the text node directly
+            node.textContent = response.translated;
 
-      if (response.success) {
-        this.updateElementContent(element, response.translated);
+            // Add visual indicator to parent element
+            element.style.borderLeft = '3px solid #4CAF50';
+            element.style.paddingLeft = '5px';
+
+            console.log('[Content Script] DOM updated:', {
+              original_length: text.length,
+              translated_length: response.translated.length,
+              tag: element.tagName
+            });
+          } else {
+            console.error('[Content Script] Translation failed for text:', response?.error || 'No response');
+          }
+        } catch (error) {
+          console.error('[Content Script] Error translating text node:', error.message);
+        }
+
+        // Delay between individual API calls
         await this.delay(this.config.TRANSLATION.DELAY_BETWEEN_CALLS);
-      } else {
-        console.error('[Content Script] Translation failed for element:', response.error);
       }
     } catch (error) {
-      console.error('[Content Script] Error translating element:', error);
+      console.error('[Content Script] Error translating element:', error.message);
     }
   }
 
@@ -292,20 +322,36 @@ class PageTranslator {
   }
 
   /**
-   * Update element content with translated text
+   * Find first text node efficiently (max depth 3, breadth-first)
    */
-  updateElementContent(element, translatedText) {
-    // Preserve HTML structure - only replace text nodes
+  findFirstTextNode(element, depth = 0) {
+    // Limit recursion depth to avoid performance issues
+    if (depth > 2) return null;
+
     for (const node of element.childNodes) {
-      if (node.nodeType === Node.TEXT_NODE) {
-        node.textContent = translatedText;
-        break; // Only update the first text node
+      if (node.nodeType === Node.TEXT_NODE && node.textContent.trim().length > 0) {
+        return node;
       }
     }
 
-    // Add visual indicator
-    element.style.borderLeft = '3px solid #4CAF50';
-    element.style.paddingLeft = '5px';
+    // Only recurse if we haven't found text yet and depth allows
+    if (depth < 2) {
+      for (const node of element.childNodes) {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          const textNode = this.findFirstTextNode(node, depth + 1);
+          if (textNode) return textNode;
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Generate unique ID for element
+   */
+  getElementId(element) {
+    // Use element's position in DOM or create a WeakMap entry
+    return Math.random().toString(36).substr(2, 9);
   }
 
   /**
