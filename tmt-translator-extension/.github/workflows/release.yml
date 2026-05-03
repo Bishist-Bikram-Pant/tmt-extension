@@ -1,0 +1,68 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm install archiver
+
+      - name: Build extension package
+        run: node build.js
+
+      - name: Get version from manifest
+        id: version
+        run: |
+          VERSION=$(jq -r '.version' manifest.json)
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: dist/tmt-translator-extension-v${{ steps.version.outputs.VERSION }}.zip
+          name: Release v${{ steps.version.outputs.VERSION }}
+          body: |
+            ## Google TMT Translator Extension v${{ steps.version.outputs.VERSION }}
+
+            ### Installation Instructions
+
+            1. Download the `tmt-translator-extension-v${{ steps.version.outputs.VERSION }}.zip` file
+            2. Extract it to a folder
+            3. Open `chrome://extensions/` in Chrome
+            4. Enable "Developer mode" (top right)
+            5. Click "Load unpacked" and select the extracted folder
+            6. Add your API key to `src/scripts/config.js`
+            7. Refresh the extension and start translating!
+
+            ### Changes in This Release
+
+            - See [README.md](../../README.md) for full documentation
+            - Supports English, Nepali, and Tamang translations
+            - Real-time web page translation
+            - Smart caching system
+
+            ### Requirements
+
+            - Chrome 88 or higher
+            - API key from Google TMT Hackathon
+            - Internet connection
+
+            For detailed documentation, visit the [GitHub repository](../../).
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
