@@ -335,3 +335,5 @@ Check the browser console for error messages:
 6. Use the console (F12) to check for technical errors
 
 The extension is now ready to use. Simply navigate to any webpage and click the extension icon to begin translating content in real-time.
+
+## Demo Video Link: https://drive.google.com/file/d/1CvsoZdFw0fNouGcW-XUUzT0wbh7V_lDV/view?usp=drive_link
