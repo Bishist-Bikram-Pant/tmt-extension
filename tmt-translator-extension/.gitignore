@@ -62,3 +62,9 @@ chrome-extension-key.pem
 demos/
 *.mp4
 *.webm
+
+tmt-translator-extension/BUILD_SUMMARY.md
+tmt-translator-extension/README.md
+tmt-translator-extension/QUICK_START.md
+tmt-translator-extension/LOGIC_EXPLANATION.md
+tmt-translator-extension/user_guide.md
